@@ -42,6 +42,7 @@ def index():
 
     return render_template('currency.html', chart_url=chart_url, result=result, table_data=table_data)
 
+
 @app.route('/price', methods=['GET', 'POST'])
 def index():
     result, chart_url, table_data, future_price = None, None, None, None
