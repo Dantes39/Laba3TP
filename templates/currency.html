@@ -2,16 +2,18 @@
 
 {% block body %}
 <h1>Курс рубля к валютам</h1>
-<form method="post" enctype="multipart/form-data">
-    <div class="mb-3">
+<form method="post" enctype="multipart/form-data" class="d-flex align-items-end gap-3">
+    <div class="mb-3" style="width: 300px;">
         <label for="datafile" class="form-label">Выберите CSV-файл</label>
         <input type="file" class="form-control" name="datafile" required>
     </div>
-    <div class="mb-3">
+    <div class="mb-3" style="width: 300px;">
         <label for="period" class="form-label">Период прогнозирования (дней)</label>
         <input type="number" class="form-control" name="period" required>
     </div>
-    <button type="submit" class="btn btn-primary">Загрузить и построить</button>
+    <div class="mb-3">
+        <button type="submit" class="btn btn-danger">Загрузить и построить</button>
+    </div>
 </form>
 
 {% if result %}
@@ -20,13 +22,17 @@
     <img src="{{ url_for('static', filename='chart.png') }}" class="img-fluid" alt="График">
 
     <h3>Максимальный прирост и убыток</h3>
-    {% for currency in result.max_gain %}
-    <p>Для валюты <em>{{ currency }}</em>:</p>
-    <ul>
-        <li><strong>Максимальный прирост:</strong> {{ result.max_gain[currency][1] | round(2) }} RUB на {{ result.max_gain[currency][0] }}</li>
-        <li><strong>Максимальный убыток:</strong> {{ result.max_loss[currency][1] | round(2) }} RUB на {{ result.max_loss[currency][0] }}</li>
-    </ul>
-    {% endfor %}
+    <div class="d-flex gap-5 flex-wrap">
+        {% for currency in result.max_gain %}
+        <div>
+            <p>Для валюты <em>{{ currency }}</em>:</p>
+            <ul>
+                <li><strong>Максимальный прирост:</strong> {{ result.max_gain[currency][1] }} RUB на {{ result.max_gain[currency][0] }}</li>
+                <li><strong>Максимальный убыток:</strong> {{ result.max_loss[currency][1] }} RUB на {{ result.max_loss[currency][0] }}</li>
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
 {% endif %}
 
 {% if table_data %}
