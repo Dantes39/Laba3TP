@@ -20,7 +20,7 @@
 {% if chart_url %}
     <hr>
     <h2>График</h2>
-    <img src="{{ url_for('static', filename=chart_url) }}" width="800">
+    <img src="{{ chart_url }}" width="800">
 {% endif %}
 
 {% if future_price %}
