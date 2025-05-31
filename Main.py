@@ -6,6 +6,9 @@ import pandas as pd
 from logic.price.analyzer import InflationAnalyzer
 from logic.price.forecast import ForecastServicePrice
 from logic.price.plotter import InflationPlotter
+from logic.population.analyzer import PopulationAnalyzer
+from logic.population.forecast import ForecastService
+from logic.population.plotter import PopulationPlotter
 
 app = Flask(__name__)
 
