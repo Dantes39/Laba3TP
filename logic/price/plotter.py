@@ -1,54 +1,38 @@
 import matplotlib.pyplot as plt
 import os
-import pandas as pd
 
-plt.switch_backend('Agg')
+class InflationPlotter:
+    def __init__(self, path='static'):
+        self.path = path
 
+    def plot(self, df_forecast, original_years):
+        plt.figure(figsize=(10, 5))
 
-class CurrencyPlotter:
-    def __init__(self, static_folder='static'):
-        self.static_path = os.path.abspath(static_folder)
-        os.makedirs(self.static_path, exist_ok=True)
-        self.chart_filename = 'chart.png'
+        # Исторические данные
+        historical = df_forecast[df_forecast['Year'].isin(original_years)]
+        plt.plot(historical['Year'], historical['Inflation'], label='Фактическая инфляция', marker='o')
 
-    def plot(self, df: pd.DataFrame, original_dates: list[str]) -> str:
-        fig, ax = plt.subplots(figsize=(10, 5))
+        # Прогнозные данные
+        forecast = df_forecast[~df_forecast['Year'].isin(original_years)]
+        if not forecast.empty:
+            plt.plot(forecast['Year'], forecast['Inflation'], label='Прогноз инфляции', marker='o', linestyle='--')
 
-        # Ensure DataFrame is sorted by date
-        df['Date'] = pd.to_datetime(df['Date'])
-        df = df.sort_values('Date').reset_index(drop=True)
+            # Соединение последней точки истории с первой точкой прогноза
+            last_hist = historical.iloc[-1]
+            first_fore = forecast.iloc[0]
+            plt.plot([last_hist['Year'], first_fore['Year']],
+                     [last_hist['Inflation'], first_fore['Inflation']],
+                     color='gray', linestyle='--', linewidth=1)
 
-        currencies = [col for col in df.columns if col not in ['Date']]
+        plt.title('Инфляция: история и прогноз')
+        plt.xlabel('Год')
+        plt.ylabel('Инфляция (%)')
+        plt.legend()
+        plt.grid(True)
 
-        for currency in currencies:
-            currency_data = df[df[currency].notna()]
-            actual = currency_data[currency_data['Date'].astype(str).isin(original_dates)]
-            forecast = currency_data[~currency_data['Date'].astype(str).isin(original_dates)]
-
-            # Plot actual data
-            ax.plot(
-                actual['Date'], actual[currency],
-                label=f"{currency} (actual)", linewidth=2
-            )
-
-            # Plot forecast data, ensuring continuity
-            if not forecast.empty:
-                joined = pd.concat([actual.tail(1), forecast])
-                joined = joined.sort_values('Date')
-                ax.plot(
-                    joined['Date'], joined[currency],
-                    label=f"{currency} (forecast)", linestyle='--',
-                    linewidth=2, alpha=0.8
-                )
-
-        ax.set_xlabel('Date')
-        ax.set_ylabel('Exchange Rate (RUB)')
-        ax.legend()
-        plt.xticks(rotation=45)
+        filepath = os.path.join(self.path, 'inflation.png')
         plt.tight_layout()
-
-        full_path = os.path.join(self.static_path, self.chart_filename)
-        plt.savefig(full_path)
+        plt.savefig(filepath)
         plt.close()
 
-        return self.chart_filename
+        return filepath
