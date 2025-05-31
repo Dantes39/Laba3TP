@@ -22,13 +22,17 @@
     <img src="{{ url_for('static', filename='chart.png') }}" class="img-fluid" alt="График">
 
     <h3>Максимальный прирост и убыток</h3>
-    {% for currency in result.max_gain %}
-    <p>Для валюты <em>{{ currency }}</em>:</p>
-    <ul>
-        <li><strong>Максимальный прирост:</strong> {{ result.max_gain[currency][1] }} RUB на {{ result.max_gain[currency][0] }}</li>
-        <li><strong>Максимальный убыток:</strong> {{ result.max_loss[currency][1] }} RUB на {{ result.max_loss[currency][0] }}</li>
-    </ul>
-    {% endfor %}
+    <div class="d-flex gap-5 flex-wrap">
+        {% for currency in result.max_gain %}
+        <div>
+            <p>Для валюты <em>{{ currency }}</em>:</p>
+            <ul>
+                <li><strong>Максимальный прирост:</strong> {{ result.max_gain[currency][1] }} RUB на {{ result.max_gain[currency][0] }}</li>
+                <li><strong>Максимальный убыток:</strong> {{ result.max_loss[currency][1] }} RUB на {{ result.max_loss[currency][0] }}</li>
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
 {% endif %}
 
 {% if table_data %}
