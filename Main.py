@@ -1,5 +1,5 @@
 from logic.currency.analyzer import CurrencyAnalyzer
-from logic.currency.forecast import ForecastService
+from logic.currency.forecast import ForecastCurrency
 from logic.currency.plotter import CurrencyPlotter
 from flask import Flask, render_template, request
 import pandas as pd
@@ -31,7 +31,7 @@ def index():
             result['max_gain'][currency] = (max_gain[currency][0], round(max_gain[currency][1], 2))
             result['max_loss'][currency] = (max_loss[currency][0], round(max_loss[currency][1], 2))
 
-        forecast = ForecastService()
+        forecast = ForecastCurrency()
         df_forecast = forecast.forecast(df, period)
         original_dates = df['Date'].unique().tolist()
         plotter = CurrencyPlotter()

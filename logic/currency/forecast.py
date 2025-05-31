@@ -1,6 +1,6 @@
 import pandas as pd
 
-class ForecastService:
+class ForecastCurrency:
     def forecast(self, df, period, window_size=5):
         df_result = df.copy()
         result_rows = []
