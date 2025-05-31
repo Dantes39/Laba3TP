@@ -1,10 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
 
-</body>
-</html>
+{% block body %}
+<h1>Численность населения России</h1>
+<form method="post" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label for="datafile" class="form-label">Выберите Excel-файл</label>
+        <input type="file" class="form-control" name="datafile" accept=".xlsx" required>
+    </div>
+    <div class="mb-3">
+        <label for="period" class="form-label">Период прогнозирования (лет)</label>
+        <input type="number" class="form-control" name="period" min="1" required>
+    </div>
+    <button type="submit" class="btn btn-danger mb-3">Загрузить и построить</button>
+</form>
+
+{% if result %}
+    <hr>
+    <h2>График численности населения</h2>
+    <img src="{{ url_for('static', filename='population_chart.png') }}" class="img-fluid" alt="График численности населения">
+
+    <h3>Максимальный прирост и убыль населения</h3>
+    <p>Максимальный прирост: {{ result.max_growth[1] | round(2) }}% в {{ result.max_growth[0] }}</p>
+    <p>Максимальная убыль: {{ result.max_decline[1] | round(2) }}% в {{ result.max_decline[0] }}</p>
+{% endif %}
+
+{% if table_data %}
+<hr>
+<h2>Данные из файла</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Год</th>
+            <th>Население (млн)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in table_data %}
+        <tr>
+            <td>{{ row['Year'] }}</td>
+            <td>{{ row['Population'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

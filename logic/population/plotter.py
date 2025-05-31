@@ -4,45 +4,39 @@ import pandas as pd
 
 plt.switch_backend('Agg')
 
-
-class CurrencyPlotter:
+class PopulationPlotter:
     def __init__(self, static_folder='static'):
         self.static_path = os.path.abspath(static_folder)
         os.makedirs(self.static_path, exist_ok=True)
-        self.chart_filename = 'chart.png'
+        self.chart_filename = 'population_chart.png'
 
-    def plot(self, df: pd.DataFrame, original_dates: list[str]) -> str:
+    def plot(self, df: pd.DataFrame, original_years: list[int]) -> str:
         fig, ax = plt.subplots(figsize=(10, 5))
 
-        # Ensure DataFrame is sorted by date
-        df['Date'] = pd.to_datetime(df['Date'])
-        df = df.sort_values('Date').reset_index(drop=True)
+        # Ensure DataFrame is sorted by year
+        df = df.sort_values('Year').reset_index(drop=True)
 
-        currencies = [col for col in df.columns if col not in ['Date']]
+        # Plot actual data
+        actual = df[df['Year'].isin(original_years)]
+        ax.plot(
+            actual['Year'], actual['Population'],
+            label="Population (actual)", linewidth=2, color='blue'
+        )
 
-        for currency in currencies:
-            currency_data = df[df[currency].notna()]
-            actual = currency_data[currency_data['Date'].astype(str).isin(original_dates)]
-            forecast = currency_data[~currency_data['Date'].astype(str).isin(original_dates)]
-
-            # Plot actual data
+        # Plot forecast data, ensuring continuity
+        forecast = df[~df['Year'].isin(original_years)]
+        if not forecast.empty:
+            joined = pd.concat([actual.tail(1), forecast])
+            joined = joined.sort_values('Year')
             ax.plot(
-                actual['Date'], actual[currency],
-                label=f"{currency} (actual)", linewidth=2
+                joined['Year'], joined['Population'],
+                label="Population (forecast)", linestyle='--',
+                linewidth=2, color='red', alpha=0.8
             )
 
-            # Plot forecast data, ensuring continuity
-            if not forecast.empty:
-                joined = pd.concat([actual.tail(1), forecast])
-                joined = joined.sort_values('Date')
-                ax.plot(
-                    joined['Date'], joined[currency],
-                    label=f"{currency} (forecast)", linestyle='--',
-                    linewidth=2, alpha=0.8
-                )
-
-        ax.set_xlabel('Date')
-        ax.set_ylabel('Exchange Rate (RUB)')
+        ax.set_xlabel('Year')
+        ax.set_ylabel('Population (millions)')
+        ax.set_title('Population of Russia Over Time')
         ax.legend()
         plt.xticks(rotation=45)
         plt.tight_layout()

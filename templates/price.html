@@ -1,10 +1,68 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
 
-</body>
-</html>
+{% block body %}
+<div class="container mt-4">
+    <h1 class="text-center mb-4">Инфляция в России</h1>
+
+    <div class="card shadow-sm mb-4 bg-secondary text-light">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label class="form-label">Файл CSV с инфляцией</label>
+                    <input type="file" name="datafile" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Прогноз (лет)</label>
+                    <input type="number" name="period" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Стоимость товара (сейчас, ₽)</label>
+                    <input type="number" name="price" class="form-control" step="0.01" required>
+                </div>
+                <button type="submit" class="btn btn-danger">Построить прогноз</button>
+            </form>
+        </div>
+    </div>
+
+    {% if chart_url %}
+        <h3 class="text-center mt-4">График инфляции</h3>
+        <div class="text-center">
+            <img src="{{ chart_url }}" class="img-fluid rounded shadow border border-light">
+        </div>
+    {% endif %}
+
+    {% if future_price %}
+        <h4 class="mt-4">Будущая стоимость товара: <strong>{{ future_price }} ₽</strong></h4>
+    {% endif %}
+
+    {% if result %}
+        <h4 class="mt-3">Анализ</h4>
+        <ul class="list-group mb-3">
+            <li class="list-group-item bg-dark text-light">📈 Максимальный рост: {{ result.max_gain[1] | round(2) }}% в {{ result.max_gain[0] }}</li>
+            <li class="list-group-item bg-dark text-light">📉 Максимальное снижение: {{ result.max_loss[1] | round(2) }}% в {{ result.max_loss[0] }}</li>
+        </ul>
+    {% endif %}
+
+    {% if table_data %}
+        <h4 class="mt-3">Данные</h4>
+        <div class="table-responsive">
+            <table class="table table-dark table-striped table-bordered table-hover">
+                <thead class="table-secondary text-dark">
+                    <tr>
+                        <th>Год</th>
+                        <th>Инфляция (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in table_data %}
+                        <tr>
+                            <td>{{ row['Year'] }}</td>
+                            <td>{{ row['Inflation'] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

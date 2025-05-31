@@ -1,6 +1,12 @@
 from logic.currency.analyzer import CurrencyAnalyzer
-from logic.currency.forecast import ForecastService
+from logic.currency.forecast import ForecastCurrency
 from logic.currency.plotter import CurrencyPlotter
+from logic.price.analyzer import InflationAnalyzer
+from logic.price.forecast import ForecastServicePrice
+from logic.price.plotter import InflationPlotter
+from logic.population.analyzer import PopulationAnalyzer
+from logic.population.forecast import ForecastService
+from logic.population.plotter import PopulationPlotter
 from flask import Flask, render_template, request
 import pandas as pd
 
@@ -29,7 +35,7 @@ def index():
             result['max_gain'][currency] = (max_gain[currency][0], round(max_gain[currency][1], 2))
             result['max_loss'][currency] = (max_loss[currency][0], round(max_loss[currency][1], 2))
 
-        forecast = ForecastService()
+        forecast = ForecastCurrency()
         df_forecast = forecast.forecast(df, period)
         original_dates = df['Date'].unique().tolist()
         plotter = CurrencyPlotter()
@@ -39,13 +45,74 @@ def index():
 
     return render_template('currency.html', chart_url=chart_url, result=result, table_data=table_data)
 
-@app.route('/price')
-def priceStart():
-    return render_template('price.html')
 
-@app.route('/population')
+@app.route('/price', methods=['GET', 'POST'])
+def price():
+    result, chart_url, table_data, future_price = None, None, None, None
+
+    if request.method == 'POST':
+        file = request.files['datafile']
+        years_to_forecast = int(request.form['period'])
+        current_price = float(request.form['price'])
+
+        df = pd.read_csv(file)
+        df['Year'] = df['Year'].astype(int)
+
+        analyzer = InflationAnalyzer(df)
+        result = analyzer.max_gain_loss()
+
+        forecaster = ForecastServicePrice()
+        df_forecast = forecaster.forecast(df, years_to_forecast)
+
+        original_years = df['Year'].tolist()
+        plotter = InflationPlotter()
+        chart_url = plotter.plot(df_forecast, original_years)
+
+        # Расчёт будущей стоимости
+        forecasted = df_forecast[df_forecast['Year'] > max(original_years)]
+        inflation_factors = [(1 + (inf / 100)) for inf in forecasted['Inflation']]
+        cumulative_multiplier = 1
+        for f in inflation_factors:
+            cumulative_multiplier *= f
+        future_price = round(current_price * cumulative_multiplier, 2)
+
+        table_data = df_forecast[df_forecast['Year'].isin(original_years)].to_dict(orient='records')
+
+    return render_template('price.html',
+                           chart_url=chart_url,
+                           result=result,
+                           table_data=table_data,
+                           future_price=future_price)
+
+@app.route('/population', methods=['GET', 'POST'])
 def populationStart():
-    return render_template('population.html')
+    chart_url = None
+    result = None
+    table_data = None
+
+    if request.method == 'POST':
+        file = request.files['datafile']
+        period = int(request.form['period'])
+        df = pd.read_excel(file, sheet_name='Лист1')
+
+        analyzer = PopulationAnalyzer(df)
+        max_growth, max_decline = analyzer.max_growth_decline()
+
+        result = {
+            'max_growth': (max_growth[0], round(max_growth[1], 2)),
+            'max_decline': (max_decline[0], round(max_decline[1], 2))
+        }
+
+        forecast = ForecastService()
+        df_forecast = forecast.forecast(df, period)
+        original_years = df['Year'].unique().tolist()
+        plotter = PopulationPlotter()
+        chart_url = plotter.plot(df_forecast, original_years)
+
+        table_data = df.to_dict(orient='records')
+
+    return render_template('population.html', chart_url=chart_url, result=result, table_data=table_data)
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5555)
