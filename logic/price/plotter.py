@@ -1,3 +1,6 @@
+import os
+
+
 class InflationPlotter:
     def __init__(self, static_folder='static'):
         import os

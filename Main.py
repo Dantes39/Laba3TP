@@ -4,7 +4,7 @@ from logic.currency.plotter import CurrencyPlotter
 from flask import Flask, render_template, request
 import pandas as pd
 from logic.price.analyzer import InflationAnalyzer
-from logic.price.forecast import ForecastService
+from logic.price.forecast import ForecastServicePrice
 from logic.price.plotter import InflationPlotter
 
 app = Flask(__name__)
@@ -58,7 +58,7 @@ def price():
         analyzer = InflationAnalyzer(df)
         result = analyzer.max_gain_loss()
 
-        forecaster = ForecastService()
+        forecaster = ForecastServicePrice()
         df_forecast = forecaster.forecast(df, years_to_forecast)
 
         original_years = df['Year'].tolist()

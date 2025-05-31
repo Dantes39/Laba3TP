@@ -1,4 +1,7 @@
-class ForecastService:
+import pandas as pd
+
+
+class ForecastServicePrice:
     def forecast(self, df, n_years, window=5):
         df = df.sort_values('Year')
         infl = df['Inflation'].tolist()
