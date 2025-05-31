@@ -1,10 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block body %}
+<h1>Инфляция в России</h1>
+<form method="post" enctype="multipart/form-data">
+    <div>
+        <label>Файл CSV с инфляцией</label>
+        <input type="file" name="datafile" required>
+    </div>
+    <div>
+        <label>Прогноз (лет)</label>
+        <input type="number" name="period" required>
+    </div>
+    <div>
+        <label>Стоимость товара (сейчас, ₽)</label>
+        <input type="number" name="price" step="0.01" required>
+    </div>
+    <button type="submit">Построить прогноз</button>
+</form>
 
-</body>
-</html>
+{% if chart_url %}
+    <hr>
+    <h2>График</h2>
+    <img src="{{ url_for('static', filename=chart_url) }}" width="800">
+{% endif %}
+
+{% if future_price %}
+    <h3>Будущая стоимость товара: {{ future_price }} ₽</h3>
+{% endif %}
+
+{% if result %}
+    <h3>Анализ</h3>
+    <ul>
+        <li>Максимальный рост: {{ result.max_gain[1] | round(2) }}% в {{ result.max_gain[0] }}</li>
+        <li>Максимальное снижение: {{ result.max_loss[1] | round(2) }}% в {{ result.max_loss[0] }}</li>
+    </ul>
+{% endif %}
+
+{% if table_data %}
+    <h3>Данные</h3>
+    <table border="1">
+        <tr><th>Год</th><th>Инфляция (%)</th></tr>
+        {% for row in table_data %}
+            <tr><td>{{ row['Year'] }}</td><td>{{ row['Inflation'] }}</td></tr>
+        {% endfor %}
+    </table>
+{% endif %}
+{% endblock %}

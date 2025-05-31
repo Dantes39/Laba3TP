@@ -3,6 +3,9 @@ from logic.currency.forecast import ForecastService
 from logic.currency.plotter import CurrencyPlotter
 from flask import Flask, render_template, request
 import pandas as pd
+from logic.price.analyzer import InflationAnalyzer
+from logic.price.forecast import ForecastService
+from logic.price.plotter import InflationPlotter
 
 app = Flask(__name__)
 
@@ -39,9 +42,43 @@ def index():
 
     return render_template('currency.html', chart_url=chart_url, result=result, table_data=table_data)
 
-@app.route('/price')
-def priceStart():
-    return render_template('price.html')
+@app.route('/price', methods=['GET', 'POST'])
+def index():
+    result, chart_url, table_data, future_price = None, None, None, None
+
+    if request.method == 'POST':
+        file = request.files['datafile']
+        years_to_forecast = int(request.form['period'])
+        current_price = float(request.form['price'])
+
+        df = pd.read_csv(file)
+        df['Year'] = df['Year'].astype(int)
+
+        analyzer = InflationAnalyzer(df)
+        result = analyzer.max_gain_loss()
+
+        forecaster = ForecastService()
+        df_forecast = forecaster.forecast(df, years_to_forecast)
+
+        original_years = df['Year'].tolist()
+        plotter = InflationPlotter()
+        chart_url = plotter.plot(df_forecast, original_years)
+
+        # Расчёт будущей стоимости
+        forecasted = df_forecast[df_forecast['Year'] > max(original_years)]
+        inflation_factors = [(1 + (inf / 100)) for inf in forecasted['Inflation']]
+        cumulative_multiplier = 1
+        for f in inflation_factors:
+            cumulative_multiplier *= f
+        future_price = round(current_price * cumulative_multiplier, 2)
+
+        table_data = df_forecast[df_forecast['Year'].isin(original_years)].to_dict(orient='records')
+
+    return render_template('price.html',
+                           chart_url=chart_url,
+                           result=result,
+                           table_data=table_data,
+                           future_price=future_price)
 
 @app.route('/population')
 def populationStart():
