@@ -44,7 +44,7 @@ def index():
 
 
 @app.route('/price', methods=['GET', 'POST'])
-def index():
+def price():
     result, chart_url, table_data, future_price = None, None, None, None
 
     if request.method == 'POST':
