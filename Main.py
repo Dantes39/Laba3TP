@@ -3,7 +3,9 @@ from logic.currency.forecast import ForecastService
 from logic.currency.plotter import CurrencyPlotter
 from flask import Flask, render_template, request
 import pandas as pd
-
+from logic.population.analyzer import PopulationAnalyzer
+from logic.population.forecast import ForecastService
+from logic.population.plotter import PopulationPlotter
 app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
@@ -43,9 +45,35 @@ def index():
 def priceStart():
     return render_template('price.html')
 
-@app.route('/population')
+@app.route('/population', methods=['GET', 'POST'])
 def populationStart():
-    return render_template('population.html')
+    chart_url = None
+    result = None
+    table_data = None
+
+    if request.method == 'POST':
+        file = request.files['datafile']
+        period = int(request.form['period'])
+        df = pd.read_excel(file, sheet_name='Лист1')
+
+        analyzer = PopulationAnalyzer(df)
+        max_growth, max_decline = analyzer.max_growth_decline()
+
+        result = {
+            'max_growth': (max_growth[0], round(max_growth[1], 2)),
+            'max_decline': (max_decline[0], round(max_decline[1], 2))
+        }
+
+        forecast = ForecastService()
+        df_forecast = forecast.forecast(df, period)
+        original_years = df['Year'].unique().tolist()
+        plotter = PopulationPlotter()
+        chart_url = plotter.plot(df_forecast, original_years)
+
+        table_data = df.to_dict(orient='records')
+
+    return render_template('population.html', chart_url=chart_url, result=result, table_data=table_data)
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5555)
